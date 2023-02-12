@@ -1,15 +1,19 @@
 import React, { useContext, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../contexts/AuthProvider/AuthProvider';
+import { toast } from 'react-hot-toast';
 
 
 
 const Login = () => {
     const [error, setError] = useState()
-    const { signIn } = useContext(AuthContext);
+    const { signIn, setLoading } = useContext(AuthContext);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const from = location.state?.from?.pathname || '/';
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -19,10 +23,16 @@ const Login = () => {
 
         signIn(email, password)
             .then(result => {
-                console.log(result.user);
+                const user = result.user
+                console.log(user);
                 form.reset();
                 setError('');
-                navigate('/');
+                if(user.emailVerified){
+                    navigate(from, {replace: true});
+                }
+                else{
+                    toast.error('Your email is not verified. Please Verify')
+                }
             })
             .catch(error => 
                 {
@@ -30,6 +40,9 @@ const Login = () => {
                     setError(error.message)
                 }
             )
+            .finallY(()=>{
+                setLoading(false);
+            })
     }
     return (
         <Form onSubmit={handleSubmit}>
